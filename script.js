@@ -13,7 +13,6 @@ document.addEventListener('DOMContentLoaded', () => {
             cursor.style.top = e.clientY + 'px';
         });
 
-        // Cursor scale on hoverable elements
         const hoverables = document.querySelectorAll('a, .card, button');
         hoverables.forEach(el => {
             el.addEventListener('mouseenter', () => {
@@ -34,7 +33,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const date = (now.getMonth() + 1).toString().padStart(2, '0') + "-" + now.getDate().toString().padStart(2, '0');
         if (hudTl) hudTl.textContent = `${time} / ${date} / HAWAI-NET`;
         
-        // Randomize coordinate deco
         if (hudBr) {
             const x = Math.floor(Math.random() * 1000);
             const y = Math.floor(Math.random() * 1000);
@@ -62,15 +60,19 @@ document.addEventListener('DOMContentLoaded', () => {
         observer.observe(el);
     });
 
-    // 4. GitHub API Logic
+    // 4. GitHub API Logic with Fallback
     async function fetchLatestRelease() {
         try {
             downloadBtn.innerHTML = '<span class="btn-text">CHECKING...</span><span class="btn-bg"></span>';
             
             const response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/releases/latest`);
-            if (!response.ok) throw new Error('Network response was not ok');
+            
+            if (!response.ok) {
+                // If rate limited or other error, jump to fallback
+                throw new Error(`GitHub API Error: ${response.status}`);
+            }
+            
             const data = await response.json();
-
             const version = data.tag_name;
             const assets = data.assets;
             
@@ -84,15 +86,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 versionTag.textContent = `VERSION ${version}`;
                 console.log(`Latest release found: ${version} (${exeAsset.name})`);
             } else {
-                console.warn('No .exe asset found in the latest release.');
-                downloadBtn.innerHTML = `<span class="btn-text">EXE NOT FOUND</span><span class="btn-bg"></span>`;
+                throw new Error('No .exe asset found');
             }
         } catch (error) {
-            console.error('Error fetching latest release:', error);
-            versionTag.textContent = "OFFLINE";
-            downloadBtn.innerHTML = `<span class="btn-text">LINK ERROR</span><span class="btn-bg"></span>`;
-            downloadBtn.style.opacity = "0.5";
-            downloadBtn.style.pointerEvents = "none";
+            console.warn('Falling back to direct GitHub release page due to error:', error);
+            
+            // FALLBACK: Point directly to the GitHub releases page
+            downloadBtn.href = `https://github.com/${GITHUB_REPO}/releases/latest`;
+            downloadBtn.innerHTML = `<span class="btn-text">GOTO RELEASES</span><span class="btn-bg"></span>`;
+            versionTag.textContent = "GITHUB PAGE";
+            
+            // Keep button active so user can still click it
+            downloadBtn.style.opacity = "1";
+            downloadBtn.style.pointerEvents = "auto";
+            downloadBtn.style.background = "var(--p3r-cyan)";
         }
     }
 
@@ -116,6 +123,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Initial Console Branding
     console.log("%c HAWAI PROJECT : FULL OVERDRIVE ", "background: #ff0054; color: #fff; font-weight: bold; font-size: 20px; padding: 5px;");
 });
