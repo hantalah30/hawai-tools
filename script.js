@@ -2,10 +2,52 @@ document.addEventListener('DOMContentLoaded', () => {
     const GITHUB_REPO = "hantalah30/hawai-projects";
     const downloadBtn = document.getElementById('download-btn');
     const versionTag = document.getElementById('version-tag');
+    const cursor = document.querySelector('.custom-cursor');
+    const hudTl = document.querySelector('.hud-tl');
+    const hudBr = document.querySelector('.hud-br');
 
-    // Reveal animations on scroll
+    // 1. Custom Cursor Logic (Desktop Only)
+    if (window.innerWidth > 768) {
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+
+        // Cursor scale on hoverable elements
+        const hoverables = document.querySelectorAll('a, .card, button');
+        hoverables.forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                cursor.style.transform = 'translate(-50%, -50%) rotate(45deg) scale(1.5)';
+                cursor.style.background = 'var(--p3r-red)';
+            });
+            el.addEventListener('mouseleave', () => {
+                cursor.style.transform = 'translate(-50%, -50%) rotate(45deg) scale(1)';
+                cursor.style.background = 'var(--p3r-cyan)';
+            });
+        });
+    }
+
+    // 2. HUD Dynamics
+    function updateHUD() {
+        const now = new Date();
+        const time = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+        const date = (now.getMonth() + 1).toString().padStart(2, '0') + "-" + now.getDate().toString().padStart(2, '0');
+        if (hudTl) hudTl.textContent = `${time} / ${date} / HAWAI-NET`;
+        
+        // Randomize coordinate deco
+        if (hudBr) {
+            const x = Math.floor(Math.random() * 1000);
+            const y = Math.floor(Math.random() * 1000);
+            hudBr.textContent = `COORD_${x}.${y} // STATUS: LINKED`;
+        }
+    }
+    setInterval(updateHUD, 2000);
+    updateHUD();
+
+    // 3. Scroll Reveal Observer
     const observerOptions = {
-        threshold: 0.1
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
     };
 
     const observer = new IntersectionObserver((entries) => {
@@ -20,10 +62,10 @@ document.addEventListener('DOMContentLoaded', () => {
         observer.observe(el);
     });
 
-    // Fetch Latest Release from GitHub
+    // 4. GitHub API Logic
     async function fetchLatestRelease() {
         try {
-            downloadBtn.textContent = "CHECKING VERSION...";
+            downloadBtn.innerHTML = '<span class="btn-text">CHECKING...</span><span class="btn-bg"></span>';
             
             const response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/releases/latest`);
             if (!response.ok) throw new Error('Network response was not ok');
@@ -38,17 +80,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (exeAsset) {
                 downloadBtn.href = exeAsset.browser_download_url;
-                downloadBtn.textContent = "DOWNLOAD LATEST";
+                downloadBtn.innerHTML = `<span class="btn-text">DOWNLOAD LATEST</span><span class="btn-bg"></span>`;
                 versionTag.textContent = `VERSION ${version}`;
                 console.log(`Latest release found: ${version} (${exeAsset.name})`);
             } else {
                 console.warn('No .exe asset found in the latest release.');
-                downloadBtn.textContent = "EXE NOT FOUND";
+                downloadBtn.innerHTML = `<span class="btn-text">EXE NOT FOUND</span><span class="btn-bg"></span>`;
             }
         } catch (error) {
             console.error('Error fetching latest release:', error);
             versionTag.textContent = "OFFLINE";
-            downloadBtn.textContent = "DOWNLOAD UNAVAILABLE";
+            downloadBtn.innerHTML = `<span class="btn-text">LINK ERROR</span><span class="btn-bg"></span>`;
             downloadBtn.style.opacity = "0.5";
             downloadBtn.style.pointerEvents = "none";
         }
@@ -56,19 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     fetchLatestRelease();
 
-    // Custom Console Message
-    console.log("%c HAWAI PROJECT ", "background: #00f5ff; color: #000; font-weight: bold; font-size: 20px; padding: 5px;");
-    console.log("Status: Online. Persona vibe detected.");
-
-    // Simple interaction for the cards
-    const cards = document.querySelectorAll('.card');
-    cards.forEach(card => {
-        card.addEventListener('mouseenter', () => {
-            // Add a little sound or additional effect here if needed
-        });
-    });
-
-    // Smooth scroll for internal links
+    // 5. Smooth Scroll Fix
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
             if (this.getAttribute('href') === '#' || (this.id !== 'download-btn')) {
@@ -85,4 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    // Initial Console Branding
+    console.log("%c HAWAI PROJECT : FULL OVERDRIVE ", "background: #ff0054; color: #fff; font-weight: bold; font-size: 20px; padding: 5px;");
 });
