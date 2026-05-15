@@ -1243,7 +1243,7 @@
             async function fetchLatestRelease() {
                 try {
                     // Logic asli dari HAWAI script untuk mengambil data release github
-                    const response = await fetch('https://api.github.com/repos/hawai-project/hawai-tool/releases/latest');
+                    const response = await fetch('https://api.github.com/repos/hawai-projects/hawai-tool/releases/latest');
                     if (!response.ok) throw new Error("Gagal mengambil data versi");
                     
                     const data = await response.json();
@@ -1255,7 +1255,7 @@
                 } catch (error) {
                     console.error("API Error: ", error);
                     if(versionTag) versionTag.textContent = "STABLE BUILD";
-                    if(downloadBtn) downloadBtn.href = "https://github.com/hawai-project";
+                    if(downloadBtn) downloadBtn.href = "https://github.com/hawai-projects";
                 }
             }
             
