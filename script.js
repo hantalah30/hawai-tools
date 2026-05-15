@@ -226,3 +226,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
     console.log("%c HAWAI PROJECT : ABSOLUTE PERFECTION ", "background: #00f5ff; color: #000; font-weight: bold; font-size: 24px; padding: 10px; border: 4px solid #000;");
 });
+
+
+
+
+    // 1. Blokir Klik Kanan (Context Menu)
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    });
+
+    // 2. Blokir Shortcut Keyboard (F12, Ctrl+U, Ctrl+Shift+I, dll)
+    document.addEventListener('keydown', function(e) {
+        // Blokir F12
+        if (e.key === 'F12') {
+            e.preventDefault();
+        }
+        
+        // Blokir Ctrl+U (View Source)
+        if (e.ctrlKey && (e.key === 'u' || e.key === 'U')) {
+            e.preventDefault();
+        }
+
+        // Blokir Ctrl+Shift+I (Inspect Element) / Ctrl+Shift+J (Console) / Ctrl+Shift+C
+        if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) {
+            e.preventDefault();
+        }
+        
+        // Blokir Ctrl+S (Save Page)
+        if (e.ctrlKey && (e.key === 's' || e.key === 'S')) {
+            e.preventDefault();
+        }
+    });
+
+    // 3. Tambahan: Bikin script pause kalau ada yang maksa buka dev tools (Anti-Debugging)
+    // Peringatan: Ini bisa bikin performa sedikit turun, tapi lumayan bikin repot yang inspect
+    setInterval(function() {
+        debugger;
+    }, 100);
