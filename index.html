@@ -1,857 +1,14 @@
 <!DOCTYPE html>
 <html lang="id">
-    <script>
-(function() {
-    // 1. Matikan semua console buat mencegah injeksi script
-    const noop = () => {};
-    ['log', 'debug', 'info', 'warn', 'error', 'table', 'clear', 'trace'].forEach(method => {
-        console[method] = noop;
-    });
 
-    // 2. Fungsi Nuklir: Hapus semua elemen kalau DevTools kebuka
-    function nukePage() {
-        document.body.innerHTML = `
-            <div style="height:100vh;display:flex;align-items:center;justify-content:center;background:#000;color:#00f5ff;font-family:monospace;font-size:2rem;text-align:center;">
-                SYSTEM BREACH DETECTED.<br>CONNECTION TERMINATED.
-            </div>
-        `;
-        // Hapus style bawaan biar makin ancur
-        document.head.innerHTML = '';
-    }
-
-    // 3. Deteksi DevTools via Ukuran Layar (Sangat efektif di Desktop)
-    function detectDevTools() {
-        const threshold = 160; // Toleransi ukuran pixel
-        const widthDiff = window.outerWidth - window.innerWidth > threshold;
-        const heightDiff = window.outerHeight - window.innerHeight > threshold;
-        
-        if (widthDiff || heightDiff) {
-            nukePage();
-        }
-    }
-
-    // Cek setiap 500ms
-    setInterval(detectDevTools, 500);
-    // Cek pas layar di-resize (biasanya pas DevTools di-dock/undock)
-    window.addEventListener('resize', detectDevTools);
-
-    // 4. Aggressive Debugger Loop (Bikin nge-hang kalau maksa buka tab Sources)
-    setInterval(() => {
-        const start = performance.now();
-        // Evaluasi string debugger ini susah di-bypass pake "Deactivate breakpoints" biasa
-        eval('debugger;'); 
-        const end = performance.now();
-        
-        // Kalau waktu eksekusi debugger lebih dari 100ms, berarti debugger lagi aktif
-        if (end - start > 100) {
-            nukePage();
-        }
-    }, 100);
-
-    // 5. Blokir Keyboard Shortcuts (Lebih Ketat)
-    document.addEventListener('keydown', function(e) {
-        if (
-            e.key === 'F12' || 
-            (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) ||
-            (e.ctrlKey && ['U', 'S', 'P'].includes(e.key.toUpperCase()))
-        ) {
-            e.preventDefault();
-            nukePage(); // Langsung hukum kalau pencet shortcut
-            return false;
-        }
-    }, true); // Use capture phase biar dieksekusi duluan
-
-    // 6. Blokir Klik Kanan absolute
-    document.addEventListener('contextmenu', e => e.preventDefault(), true);
-
-})();
-</script>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HAWAI Projects</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Roboto+Condensed:ital,wght@0,700;0,900;1,700;1,900&display=swap');
-
-        :root {
-            --p3r-blue-dark: #000814;
-            --p3r-blue-mid: #001d3d;
-            --p3r-blue-light: #003566;
-            --p3r-cyan: #00f5ff;
-            --p3r-white: #ffffff;
-            --p3r-red: #ff0054;
-            --p3r-glass: rgba(0, 245, 255, 0.05);
-            --p3r-border: rgba(0, 245, 255, 0.3);
-            --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
-            --ease-bounce: cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            background-color: var(--p3r-blue-dark);
-            color: var(--p3r-white);
-            overflow: hidden;
-            min-height: 100vh;
-            font-family: 'Inter', sans-serif;
-            background-image: radial-gradient(circle at 50% 50%, #001d3d 0, #000814 100%);
-        }
-
-        /* --- BOOT ANIMATION --- */
-        .boot-overlay {
-            position: fixed;
-            inset: 0;
-            background: var(--p3r-blue-dark);
-            z-index: 20000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 1s;
-        }
-
-        .boot-content {
-            text-align: center;
-            animation: 0.1s infinite alternate bootFlicker;
-        }
-
-        @keyframes bootFlicker {
-            from { opacity: 0.8; }
-            to { opacity: 1; }
-        }
-
-        .boot-logo {
-            font-family: 'Roboto Condensed', sans-serif;
-            font-weight: 900;
-            font-size: 5rem;
-            font-style: italic;
-            color: var(--p3r-cyan);
-            letter-spacing: 15px;
-            margin-bottom: 20px;
-        }
-
-        .boot-status {
-            font-size: 0.8rem;
-            letter-spacing: 5px;
-            color: var(--p3r-white);
-            opacity: 0.6;
-        }
-
-        .boot-bar {
-            width: 300px;
-            height: 2px;
-            background: rgba(255, 255, 255, 0.1);
-            margin: 20px auto;
-            overflow: hidden;
-        }
-
-        .boot-progress {
-            width: 0%;
-            height: 100%;
-            background: var(--p3r-cyan);
-            box-shadow: 0 0 10px var(--p3r-cyan);
-            transition: width 1.5s ease-in-out;
-        }
-
-        /* --- HUD ELEMENTS --- */
-        .shutter-overlay {
-            position: fixed;
-            inset: 0;
-            background: var(--p3r-cyan);
-            z-index: 15000;
-            transform: translateY(100%);
-            transition: transform 0.6s cubic-bezier(0.77, 0, 0.175, 1);
-            pointer-events: none;
-        }
-
-        .shutter-overlay.active {
-            transform: translateY(0);
-        }
-
-        .hud-scanline {
-            position: fixed;
-            inset: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.05) 50%);
-            z-index: 9999;
-            background-size: 100% 4px;
-            pointer-events: none;
-            opacity: 0.3;
-        }
-
-        .hud-corner {
-            position: fixed;
-            width: 2px;
-            height: 100px;
-            background: var(--p3r-cyan);
-            z-index: 1000;
-            opacity: 0.4;
-            box-shadow: 0 0 10px var(--p3r-cyan);
-        }
-
-        .tl { top: 0; left: 20px; }
-        .br { bottom: 0; right: 20px; }
-
-        /* --- LAYOUT --- */
-        .discord-app {
-            display: grid;
-            grid-template-columns: 80px 260px 1fr 260px;
-            height: 100vh;
-            width: 100vw;
-            opacity: 0;
-            transition: opacity 1s;
-        }
-
-        .discord-app.ready {
-            opacity: 1;
-        }
-
-        /* --- SIDEBAR SERVERS --- */
-        .sidebar-servers {
-            background: rgba(0, 8, 20, 0.98);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 24px 0;
-            gap: 16px;
-            border-right: 1px solid var(--p3r-border);
-            backdrop-filter: blur(40px);
-            z-index: 100;
-        }
-
-        .server-icon {
-            width: 48px;
-            height: 48px;
-            background: var(--p3r-blue-mid);
-            transform: rotate(45deg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s var(--ease-bounce);
-            border: 1px solid var(--p3r-border);
-        }
-
-        .server-icon span, .server-icon svg {
-            transform: rotate(-45deg);
-            font-weight: 900;
-        }
-
-        .server-separator {
-            width: 32px;
-            height: 2px;
-            background: var(--p3r-border);
-        }
-
-        .server-icon.active, .server-icon:hover {
-            transform: rotate(45deg) scale(1.1);
-            background: var(--p3r-cyan);
-            border-color: var(--p3r-white);
-            box-shadow: 0 0 25px var(--p3r-cyan);
-            color: var(--p3r-blue-dark);
-        }
-
-        /* --- SIDEBAR CHANNELS --- */
-        .sidebar-channels {
-            background: rgba(0, 29, 61, 0.9);
-            border-right: 1px solid var(--p3r-border);
-            backdrop-filter: blur(25px);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .channel-header {
-            height: 70px;
-            padding: 0 25px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: linear-gradient(135deg, var(--p3r-blue-light), var(--p3r-blue-mid));
-            border-bottom: 3px solid var(--p3r-cyan);
-            transform: skewX(-12deg);
-            margin: 15px 15px 5px;
-            box-shadow: 10px 10px 0 rgba(0, 0, 0, 0.5);
-            flex-shrink: 0;
-        }
-
-        .channel-header h3 {
-            font-family: 'Roboto Condensed', sans-serif;
-            font-weight: 900;
-            font-style: italic;
-            transform: skewX(12deg);
-            letter-spacing: 2px;
-            font-size: 0.8rem;
-        }
-
-        .channel-header svg {
-            transform: skewX(12deg);
-            opacity: 0.6;
-        }
-
-        .channel-scroller {
-            flex: 1;
-            overflow-y: auto;
-            padding: 10px 8px;
-        }
-
-        .channel-category {
-            padding: 18px 15px 6px;
-            font-size: 0.65rem;
-            font-weight: 900;
-            color: var(--p3r-cyan);
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            opacity: 0.5;
-        }
-
-        .channel-item {
-            padding: 12px 18px;
-            margin: 3px 0;
-            cursor: pointer;
-            transition: all 0.3s var(--ease-smooth);
-            font-weight: 700;
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.5);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            position: relative;
-            border-radius: 4px;
-        }
-
-        .channel-hash {
-            font-weight: 900;
-            opacity: 0.4;
-            font-size: 1rem;
-        }
-
-        .channel-item:hover {
-            background: rgba(0, 245, 255, 0.08);
-            color: var(--p3r-white);
-            transform: translateX(5px);
-        }
-
-        .channel-item.active {
-            background: rgba(0, 245, 255, 0.15);
-            color: var(--p3r-white);
-            transform: translateX(8px);
-        }
-
-        .channel-item.active::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 4px;
-            height: 100%;
-            background: var(--p3r-red);
-            border-radius: 0 4px 4px 0;
-        }
-
-        /* --- USER BAR --- */
-        .user-bar {
-            margin-top: auto;
-            flex-shrink: 0;
-            height: 68px;
-            background: rgba(0, 8, 20, 0.95);
-            padding: 0 15px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            border-top: 1px solid var(--p3r-border);
-        }
-
-        .user-avatar {
-            width: 36px;
-            height: 36px;
-            background: var(--p3r-cyan);
-            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
-            flex-shrink: 0;
-        }
-
-        .user-info {
-            flex: 1;
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .username {
-            font-weight: 900;
-            font-style: italic;
-            font-size: 0.85rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .status {
-            font-size: 0.65rem;
-            color: #43b581;
-            letter-spacing: 1px;
-            font-weight: 700;
-        }
-
-        .user-controls {
-            flex-shrink: 0;
-        }
-
-        .control-btn {
-            width: 36px;
-            height: 36px;
-            background: transparent;
-            border: 1px solid var(--p3r-border);
-            color: var(--p3r-white);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 4px;
-            transition: all 0.2s var(--ease-smooth);
-        }
-
-        .control-btn:hover {
-            background: rgba(0, 245, 255, 0.15);
-            border-color: var(--p3r-cyan);
-        }
-
-        .control-btn svg {
-            width: 16px;
-            height: 16px;
-        }
-
-        /* --- MAIN CONTENT --- */
-        .main-content {
-            display: flex;
-            flex-direction: column;
-            background: radial-gradient(circle at top right, rgba(0, 85, 163, 0.15), transparent);
-            overflow: hidden;
-        }
-
-        .chat-header {
-            height: 60px;
-            background: rgba(0, 29, 61, 0.7);
-            border-bottom: 1px solid var(--p3r-border);
-            backdrop-filter: blur(15px);
-            display: flex;
-            align-items: center;
-            padding: 0 40px;
-            gap: 10px;
-            flex-shrink: 0;
-            z-index: 50;
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .header-left .channel-hash {
-            font-size: 1.2rem;
-            color: var(--p3r-cyan);
-            opacity: 0.6;
-        }
-
-        .header-left h2 {
-            font-family: 'Roboto Condensed', sans-serif;
-            font-weight: 900;
-            font-style: italic;
-            font-size: 1.1rem;
-            letter-spacing: 1px;
-        }
-
-        .content-scroller {
-            flex: 1;
-            overflow-y: auto;
-            padding: 60px 50px;
-            scroll-behavior: smooth;
-        }
-
-        /* --- SIDEBAR MEMBERS --- */
-        .sidebar-members {
-            background: rgba(0, 29, 61, 0.85);
-            padding: 20px 15px;
-            border-left: 1px solid var(--p3r-border);
-            backdrop-filter: blur(25px);
-            overflow-y: auto;
-        }
-
-        .member-category {
-            font-size: 0.65rem;
-            font-weight: 900;
-            color: var(--p3r-cyan);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            padding: 15px 10px 8px;
-            opacity: 0.5;
-        }
-
-        .member-item {
-            padding: 10px 12px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s var(--ease-smooth);
-            margin-bottom: 2px;
-        }
-
-        .member-item:hover {
-            background: rgba(0, 245, 255, 0.08);
-        }
-
-        .member-avatar {
-            width: 34px;
-            height: 34px;
-            background: var(--p3r-blue-light);
-            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
-            flex-shrink: 0;
-        }
-
-        .member-name {
-            font-size: 0.85rem;
-            font-weight: 700;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* --- PAGES & HERO --- */
-        .hero {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            min-height: 60vh;
-        }
-
-        .hero-status-tag {
-            font-size: 0.75rem;
-            font-weight: 900;
-            letter-spacing: 4px;
-            color: var(--p3r-cyan);
-            margin-bottom: 20px;
-            opacity: 0.7;
-        }
-
-        .hero-main-title {
-            font-size: 9rem;
-            font-weight: 900;
-            font-style: italic;
-            font-family: 'Roboto Condensed', sans-serif;
-            line-height: 0.8;
-            text-transform: uppercase;
-        }
-
-        .glitch-wrapper {
-            position: relative;
-            display: inline-block;
-            animation: 8s ease-in-out infinite heroFloat;
-        }
-
-        .glitch-wrapper::after {
-            content: attr(data-text);
-            position: absolute;
-            left: 4px;
-            top: 4px;
-            color: var(--p3r-red);
-            z-index: -1;
-            opacity: 0.4;
-        }
-
-        @keyframes heroFloat {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-12px); }
-        }
-
-        .cyan-text { color: var(--p3r-cyan); text-shadow: 0 0 30px rgba(0, 245, 255, 0.3); }
-        .red-text { color: var(--p3r-red); text-shadow: 0 0 30px rgba(255, 0, 84, 0.3); }
-
-        .hero-desc {
-            max-width: 750px;
-            margin-top: 40px;
-            font-size: 1.3rem;
-            line-height: 1.9;
-            color: rgba(255, 255, 255, 0.65);
-            border-left: 8px solid var(--p3r-cyan);
-            padding-left: 40px;
-            background: linear-gradient(90deg, rgba(0, 245, 255, 0.04), transparent);
-        }
-
-        .store-grid, .update-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-            gap: 30px;
-            margin-top: 60px;
-        }
-
-        .card, .game-card {
-            background: var(--p3r-glass);
-            border: 1px solid var(--p3r-border);
-            padding: 40px;
-            clip-path: polygon(0 0, 100% 0, 100% 85%, 85% 100%, 0 100%);
-            transition: all 0.5s var(--ease-smooth);
-            position: relative;
-        }
-
-        .card h3, .game-card h3 {
-            font-family: 'Roboto Condensed', sans-serif;
-            font-weight: 900;
-            font-style: italic;
-            font-size: 1.3rem;
-            margin-bottom: 12px;
-            letter-spacing: 1px;
-        }
-
-        .card p, .game-card p {
-            color: rgba(255, 255, 255, 0.6);
-            line-height: 1.7;
-            font-size: 0.9rem;
-        }
-
-        .card:hover, .game-card:hover {
-            background: rgba(0, 245, 255, 0.1);
-            transform: translateY(-10px) scale(1.01);
-            border-color: var(--p3r-cyan);
-            box-shadow: 15px 15px 0 rgba(0, 245, 255, 0.08);
-        }
-
-        .card-num {
-            position: absolute;
-            top: 15px;
-            right: 30px;
-            font-size: 3.5rem;
-            font-weight: 900;
-            font-style: italic;
-            opacity: 0.08;
-            font-family: 'Roboto Condensed', sans-serif;
-        }
-
-        .btn-p3r {
-            display: inline-block;
-            background: var(--p3r-cyan);
-            color: var(--p3r-blue-dark);
-            font-family: 'Roboto Condensed', sans-serif;
-            font-weight: 900;
-            font-style: italic;
-            padding: 22px 60px;
-            border: none;
-            cursor: pointer;
-            clip-path: polygon(12% 0, 100% 0, 88% 100%, 0 100%);
-            transition: 0.4s var(--ease-bounce);
-            text-transform: uppercase;
-            font-size: 1.1rem;
-            letter-spacing: 2px;
-            text-decoration: none;
-            text-align: center;
-        }
-
-        .btn-p3r:hover {
-            transform: scale(1.08) skewX(-5deg);
-            background: var(--p3r-white);
-            box-shadow: 0 0 40px rgba(255, 255, 255, 0.5);
-        }
-
-        .cta-box {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-        }
-
-        /* --- MODAL --- */
-        .modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 8, 20, 0.92);
-            z-index: 16000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(15px);
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: var(--p3r-blue-dark);
-            border: 6px solid var(--p3r-cyan);
-            padding: 60px;
-            clip-path: polygon(0 8%, 8% 0, 100% 0, 100% 92%, 92% 100%, 0 100%);
-            box-shadow: 0 0 120px rgba(0, 245, 255, 0.3);
-            max-width: 550px;
-            width: 90%;
-            animation: modalPop 0.5s var(--ease-bounce);
-        }
-
-        .modal-title {
-            font-family: 'Roboto Condensed', sans-serif;
-            font-weight: 900;
-            font-style: italic;
-            font-size: 2rem;
-            margin-bottom: 10px;
-            letter-spacing: 2px;
-        }
-
-        @keyframes modalPop {
-            from { transform: scale(0.8); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-
-        .p3r-input {
-            width: 100%;
-            background: rgba(255, 255, 255, 0.05);
-            border: 2px solid var(--p3r-border);
-            padding: 18px 20px;
-            color: #fff;
-            font-family: 'Roboto Condensed', sans-serif;
-            font-weight: 900;
-            font-style: italic;
-            font-size: 1.3rem;
-            text-transform: uppercase;
-            outline: 0;
-            transition: all 0.3s var(--ease-smooth);
-        }
-
-        .p3r-input:focus {
-            border-color: var(--p3r-cyan);
-            background: rgba(0, 245, 255, 0.05);
-            box-shadow: 0 0 20px rgba(0, 245, 255, 0.2);
-        }
-
-        .loading-bar {
-            width: 100%;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.1);
-            margin: 25px 0;
-            overflow: hidden;
-            border-radius: 2px;
-        }
-
-        .loading-progress {
-            width: 0%;
-            height: 100%;
-            background: var(--p3r-cyan);
-            box-shadow: 0 0 10px var(--p3r-cyan);
-            transition: width 0.1s linear;
-        }
-
-        .page-section {
-            display: none;
-        }
-
-        .page-section.active {
-            display: block;
-            animation: sectionIn 0.7s var(--ease-smooth) forwards;
-        }
-
-        @keyframes sectionIn {
-            from { opacity: 0; transform: translateY(30px) scale(0.97); filter: blur(5px); }
-            to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
-        }
-
-        .reveal {
-            opacity: 0;
-            transform: translateY(25px);
-            transition: 0.8s var(--ease-smooth);
-        }
-
-        .reveal.active {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* --- BACKGROUND ANIMATION --- */
-        .shard {
-            position: fixed;
-            background: rgba(0, 245, 255, 0.03);
-            border: 1px solid rgba(0, 245, 255, 0.06);
-            z-index: -1;
-            pointer-events: none;
-            animation: 30s linear infinite shardDance;
-        }
-
-        @keyframes shardDance {
-            0% { transform: translate(0, 0) rotate(0); }
-            50% { transform: translate(80px, 40px) rotate(180deg); }
-            100% { transform: translate(0, 0) rotate(360deg); }
-        }
-
-        .shard-1 { width: 700px; height: 120px; top: 10%; right: -180px; }
-        .shard-2 { width: 500px; height: 100px; bottom: 8%; left: -120px; animation-delay: -10s; }
-
-        /* --- MOBILE NAV --- */
-        .mobile-nav {
-            display: none;
-        }
-
-        @media (max-width: 768px) {
-            .discord-app { grid-template-columns: 1fr; }
-            .chat-header, .sidebar-channels, .sidebar-members, .sidebar-servers { display: none !important; }
-            .main-content { height: 100vh; padding-bottom: 110px; }
-            .content-scroller { padding: 30px 20px; }
-            
-            .mobile-nav {
-                display: flex;
-                position: fixed;
-                bottom: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                width: 90%;
-                height: 72px;
-                background: rgba(0, 8, 20, 0.95);
-                border: 2px solid var(--p3r-cyan);
-                border-radius: 40px;
-                backdrop-filter: blur(30px);
-                z-index: 10000;
-                padding: 0 25px;
-                justify-content: space-around;
-                align-items: center;
-                box-shadow: 0 15px 50px rgba(0, 0, 0, 0.9);
-            }
-
-            .mobile-nav-item {
-                color: rgba(255, 255, 255, 0.3);
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 4px;
-                font-family: 'Roboto Condensed', sans-serif;
-                font-weight: 900;
-                font-size: 0.6rem;
-                letter-spacing: 1px;
-                transition: all 0.3s var(--ease-smooth);
-                padding: 8px 12px;
-                cursor: pointer;
-            }
-
-            .mobile-nav-item.active {
-                color: var(--p3r-cyan);
-                transform: translateY(-8px);
-            }
-
-            .mobile-nav-item svg { width: 24px; height: 24px; }
-            .hero { min-height: 50vh; }
-            .hero-main-title { font-size: 3.5rem !important; }
-            .hero-desc { font-size: 1rem !important; padding-left: 20px !important; margin-top: 25px !important; border-left-width: 5px !important; }
-            .store-grid, .update-grid { grid-template-columns: 1fr; gap: 15px; margin-top: 30px; }
-            .card, .game-card { padding: 25px; }
-            .card h3, .game-card h3 { font-size: 1.1rem; }
-            .modal-content { padding: 40px 30px; }
-            .btn-p3r { padding: 18px 40px; font-size: 0.95rem; }
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
 
-    <!-- OVERLAYS -->
+<body>
     <div id="boot-overlay" class="boot-overlay">
         <div class="boot-content">
             <div class="boot-logo">HAWAI</div>
@@ -861,7 +18,6 @@
             </div>
         </div>
     </div>
-    
     <div class="shutter-overlay"></div>
     <div class="hud-scanline"></div>
     <div class="hud-corner tl"></div>
@@ -869,10 +25,9 @@
     <div class="shard shard-1"></div>
     <div class="shard shard-2"></div>
 
-    <!-- MAIN APP WRAPPER -->
-    <div class="discord-app" id="discord-app">
-        
-        <!-- SIDEBAR 1: SERVERS -->
+    <!-- Discord App Wrapper -->
+    <div class="discord-app">
+        <!-- Sidebar 1: Servers -->
         <aside class="sidebar-servers">
             <div class="server-icon active" title="HAWAI Project">
                 <span class="server-initial">H</span>
@@ -887,7 +42,7 @@
             </div>
         </aside>
 
-        <!-- SIDEBAR 2: CHANNELS -->
+        <!-- Sidebar 2: Channels -->
         <aside class="sidebar-channels">
             <header class="channel-header">
                 <h3>HAWAI COMMUNITY</h3>
@@ -895,27 +50,31 @@
                     <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
             </header>
-            
+
             <div class="channel-scroller">
                 <div class="channel-category">INFORMATION</div>
                 <div class="channel-item active" data-target="welcome">
-                    <span class="channel-hash">#</span> <span class="channel-name">welcome</span>
+                    <span class="channel-hash">#</span>
+                    <span class="channel-name">welcome</span>
                 </div>
                 <div class="channel-item" data-target="announcements">
-                    <span class="channel-hash">#</span> <span class="channel-name">announcements</span>
+                    <span class="channel-hash">#</span>
+                    <span class="channel-name">announcements</span>
                 </div>
-                
+
                 <div class="channel-category">HAWAI TOOL</div>
                 <div class="channel-item" data-target="download">
-                    <span class="channel-hash">#</span> <span class="channel-name">download</span>
+                    <span class="channel-hash">#</span>
+                    <span class="channel-name">download</span>
                 </div>
-                
+
                 <div class="channel-category">STOREFRONT</div>
                 <div class="channel-item" data-target="store">
-                    <span class="channel-hash">#</span> <span class="channel-name">game-catalog</span>
+                    <span class="channel-hash">#</span>
+                    <span class="channel-name">game-catalog</span>
                 </div>
             </div>
-            
+
             <div class="user-bar">
                 <div class="user-avatar"></div>
                 <div class="user-info">
@@ -924,7 +83,8 @@
                 </div>
                 <div class="user-controls">
                     <button id="change-name-btn" class="control-btn" title="Edit Profile">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="3">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                             <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                         </svg>
@@ -933,7 +93,7 @@
             </div>
         </aside>
 
-        <!-- MAIN CONTENT AREA -->
+        <!-- Main View (Content) -->
         <div class="main-content">
             <header class="chat-header">
                 <div class="header-left">
@@ -941,77 +101,93 @@
                     <h2 id="active-channel-name">welcome</h2>
                 </div>
             </header>
-            
+
             <div class="content-scroller" id="main-scroller">
                 <div id="page-content-layer">
                     <main>
-                        <!-- SECTION: WELCOME -->
+                        <!-- Welcome Section -->
                         <section id="welcome" class="page-section active">
                             <div class="hero">
-                                <div class="hero-status-tag reveal active">SYSTEM_ONLINE // HAWAI_PROJECT</div>
+                                <div class="hero-status-tag reveal active">
+                                    SYSTEM_ONLINE // HAWAI_PROJECT
+                                </div>
                                 <h1 class="hero-main-title reveal active">
-                                    <span class="glitch-wrapper" data-text="HAWAI">HAWAI</span> 
+                                    <span class="glitch-wrapper" data-text="HAWAI">HAWAI</span>
                                     <span class="glitch-wrapper cyan-text" data-text="PROJECT">PROJECT</span>
                                 </h1>
-                                <p class="hero-desc reveal active">Pusat inovasi buat para gamer. Kita nyediain tool bypass terbaru, sistem otomasi gaming, dan sharing account yang aman.</p>
+                                <p class="hero-desc reveal active">
+                                    Pusat inovasi buat para gamer. Kita nyediain tool bypass terbaru, sistem otomasi
+                                    gaming, dan sharing account yang aman.
+                                </p>
                             </div>
                         </section>
-                        
-                        <!-- SECTION: ANNOUNCEMENTS -->
+
+                        <!-- Announcements Section -->
                         <section id="announcements" class="page-section">
                             <div class="section container">
-                                <h2 class="hero-main-title reveal active" style="font-size:4rem;margin-bottom:40px">
-                                    <span class="glitch-wrapper" data-text="LATEST">LATEST</span> 
+                                <h2 class="hero-main-title reveal active" style="font-size: 4rem; margin-bottom: 40px;">
+                                    <span class="glitch-wrapper" data-text="LATEST">LATEST</span>
                                     <span class="glitch-wrapper cyan-text" data-text="UPDATES">UPDATES</span>
                                 </h2>
                                 <div class="update-grid">
                                     <div class="card reveal active">
                                         <div class="card-num">01</div>
                                         <h3>v10.1.0 - Steam Path Fix</h3>
-                                        <p>Info terbaru: Bug Steam path detection udah bener bray. Tool bakal nyari folder Steam lu secara otomatis sekarang.</p>
+                                        <p>Info terbaru: Bug Steam path detection udah bener bray. Tool bakal nyari
+                                            folder Steam lu secara otomatis sekarang.</p>
                                     </div>
                                     <div class="card reveal active">
                                         <div class="card-num">02</div>
                                         <h3>v10.0.0 - Full Native Build</h3>
-                                        <p>Semua modul sekarang udah native (C++) buat performa maksimal dan keamanan tingkat tinggi.</p>
+                                        <p>Semua modul sekarang udah native (C++) buat performa maksimal dan keamanan
+                                            tingkat tinggi.</p>
                                     </div>
                                 </div>
                             </div>
                         </section>
-                        
-                        <!-- SECTION: DOWNLOAD -->
+
+                        <!-- Download Section -->
                         <section id="download" class="page-section">
-                            <div class="hero" style="align-items:center;text-align:center">
+                            <div class="hero" style="align-items: center; text-align: center;">
                                 <h1 class="hero-main-title reveal active">
-                                    <span class="glitch-wrapper" data-text="DOWNLOAD">DOWNLOAD</span> 
+                                    <span class="glitch-wrapper" data-text="DOWNLOAD">DOWNLOAD</span>
                                     <span class="glitch-wrapper cyan-text" data-text="VERSION">VERSION</span>
                                 </h1>
-                                <p class="hero-desc reveal active" style="border-left:none;margin:40px 0;text-align:center">Selalu pastiin lu pake versi terbaru dari official GitHub kita.</p>
+                                <p class="hero-desc reveal active"
+                                    style="border-left: none; margin: 40px 0; text-align: center;">
+                                    Selalu pastiin lu pake versi terbaru dari official GitHub kita.
+                                </p>
                                 <div class="cta-box reveal active">
-                                    <div id="version-tag" style="font-weight:900;color:var(--p3r-cyan);margin-bottom:20px">CHECKING...</div>
+                                    <div id="version-tag"
+                                        style="font-weight: 900; color: var(--p3r-cyan); margin-bottom: 20px;">
+                                        CHECKING...</div>
                                     <a id="download-btn" href="#" class="btn-p3r">GET APPLICATION</a>
                                 </div>
                             </div>
                         </section>
-                        
-                        <!-- SECTION: STORE -->
+
+                        <!-- Store Section -->
                         <section id="store" class="page-section">
                             <div class="section container">
-                                <h1 class="hero-main-title reveal active" style="font-size:4rem;margin-bottom:40px">
-                                    <span class="glitch-wrapper" data-text="GAME">GAME</span> 
+                                <h1 class="hero-main-title reveal active" style="font-size: 4rem; margin-bottom: 40px;">
+                                    <span class="glitch-wrapper" data-text="GAME">GAME</span>
                                     <span class="glitch-wrapper red-text" data-text="CATALOG">CATALOG</span>
                                 </h1>
                                 <div class="store-grid">
                                     <div class="game-card reveal active">
                                         <h3>EA SPORTS FC 25</h3>
                                         <p>Simulasi sepak bola paling realistis bray. Gass beli!</p>
-                                        <div style="font-size:1.5rem;font-weight:900;color:var(--p3r-red);margin:20px 0">IDR 150.000</div>
+                                        <div
+                                            style="font-size: 1.5rem; font-weight: 900; color: var(--p3r-red); margin: 20px 0;">
+                                            IDR 150.000</div>
                                         <button class="btn-p3r btn-buy" data-game="FC 25">BUY NOW</button>
                                     </div>
                                     <div class="game-card reveal active">
                                         <h3>Cyberpunk 2077</h3>
                                         <p>Night City nungguin lu. Performa maksimal!</p>
-                                        <div style="font-size:1.5rem;font-weight:900;color:var(--p3r-red);margin:20px 0">IDR 120.000</div>
+                                        <div
+                                            style="font-size: 1.5rem; font-weight: 900; color: var(--p3r-red); margin: 20px 0;">
+                                            IDR 120.000</div>
                                         <button class="btn-p3r btn-buy" data-game="Cyberpunk 2077">BUY NOW</button>
                                     </div>
                                 </div>
@@ -1022,37 +198,37 @@
             </div>
         </div>
 
-        <!-- SIDEBAR 3: MEMBERS -->
+        <!-- Sidebar 3: Members -->
         <aside class="sidebar-members">
             <div class="member-category">ONLINE — 3</div>
             <div class="member-item" data-user="Admin_Hanta">
-                <div class="member-avatar" style="background:var(--p3r-red)"></div>
+                <div class="member-avatar" style="background: var(--p3r-red);"></div>
                 <div class="member-name">Admin_Hanta</div>
             </div>
             <div class="member-item" data-user="Bot_Hawai">
-                <div class="member-avatar" style="background:var(--p3r-cyan)"></div>
+                <div class="member-avatar" style="background: var(--p3r-cyan);"></div>
                 <div class="member-name">Bot_Hawai</div>
             </div>
             <div class="member-item" data-user="Guest_User" id="current-user-item">
-                <div class="member-avatar" style="background:var(--p3r-white)"></div>
+                <div class="member-avatar" style="background: var(--p3r-white);"></div>
                 <div id="member-username" class="member-name">Guest_User</div>
             </div>
-            <div class="member-category" style="margin-top:40px">OFFLINE — 124</div>
+            <div class="member-category" style="margin-top: 40px;">OFFLINE — 124</div>
         </aside>
     </div>
 
-    <!-- MOBILE NAVIGATION -->
+    <!-- Mobile Navigation -->
     <nav class="mobile-nav">
         <div class="mobile-nav-item active" data-target="welcome">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-            </svg> 
+            </svg>
             <span>HOME</span>
         </div>
         <div class="mobile-nav-item" data-target="announcements">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-            </svg> 
+            </svg>
             <span>NEWS</span>
         </div>
         <div class="mobile-nav-item" data-target="download">
@@ -1060,7 +236,7 @@
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
-            </svg> 
+            </svg>
             <span>GET</span>
         </div>
         <div class="mobile-nav-item" data-target="store">
@@ -1068,21 +244,22 @@
                 <circle cx="9" cy="21" r="1" />
                 <circle cx="20" cy="21" r="1" />
                 <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-            </svg> 
+            </svg>
             <span>STORE</span>
         </div>
     </nav>
 
-    <!-- MODALS -->
+    <!-- Identity Modal -->
     <div id="identity-modal" class="modal">
         <div class="modal-content">
             <h2 class="modal-title">WHO ARE YOU?</h2>
-            <p style="margin-bottom:2rem">Masukkan identitas lu buat sinkronisasi ke sistem HAWAI.</p>
-            <input id="username-input" class="p3r-input" placeholder="INPUT_NAME..." autocomplete="off">
-            <button id="save-name-btn" class="btn-p3r" style="width:100%;margin-top:2rem">INITIALIZE SYSTEM</button>
+            <p style="margin-bottom: 2rem;">Masukkan identitas lu buat sinkronisasi ke sistem HAWAI.</p>
+            <input type="text" id="username-input" class="p3r-input" placeholder="INPUT_NAME..." autocomplete="off">
+            <button id="save-name-btn" class="btn-p3r" style="width: 100%; margin-top: 2rem;">INITIALIZE SYSTEM</button>
         </div>
     </div>
-    
+
+    <!-- Payment Modal -->
     <div id="payment-modal" class="modal">
         <div class="modal-content">
             <h2 class="modal-title">REDIRECTING...</h2>
@@ -1090,214 +267,11 @@
             <div class="loading-bar">
                 <div class="loading-progress"></div>
             </div>
-            <button class="btn-p3r btn-close-modal" style="background:var(--p3r-red);color:#fff">CANCEL</button>
+            <button class="btn-p3r btn-close-modal" style="background: var(--p3r-red); color: white;">CANCEL</button>
         </div>
     </div>
 
-    <!-- CLEAN / DEOBFUSCATED JAVASCRIPT -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            
-            // --- Elements Selection ---
-            const bootOverlay = document.getElementById('boot-overlay');
-            const discordApp = document.getElementById('discord-app');
-            const bootProgress = document.querySelector('.boot-progress');
-            
-            const identityModal = document.getElementById('identity-modal');
-            const paymentModal = document.getElementById('payment-modal');
-            const usernameInput = document.getElementById('username-input');
-            const displayUsername = document.getElementById('display-username');
-            const memberUsername = document.getElementById('member-username');
-            const saveNameBtn = document.getElementById('save-name-btn');
-            const changeNameBtn = document.getElementById('change-name-btn');
-            
-            const channelItems = document.querySelectorAll('.channel-item');
-            const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
-            const pageSections = document.querySelectorAll('.page-section');
-            const activeChannelName = document.getElementById('active-channel-name');
-            
-            const buyBtns = document.querySelectorAll('.btn-buy');
-            const targetGameSpan = document.getElementById('target-game');
-            const loadingProgress = document.querySelector('.loading-progress');
-            const btnCloseModal = document.querySelector('.btn-close-modal');
-            
-            const versionTag = document.getElementById('version-tag');
-            const downloadBtn = document.getElementById('download-btn');
-
-            // --- Boot Sequence & Progress Bar ---
-            if (bootProgress) {
-                setTimeout(() => { bootProgress.style.width = '100%'; }, 100);
-            }
-
-            setTimeout(() => {
-                if(bootOverlay) {
-                    bootOverlay.style.opacity = '0';
-                    setTimeout(() => {
-                        bootOverlay.style.display = 'none';
-                        if(discordApp) discordApp.classList.add('ready');
-                    }, 1000);
-                }
-            }, 1500);
-
-            // --- User Identity Management ---
-            function updateUsername(name) {
-                if (displayUsername) displayUsername.textContent = name;
-                if (memberUsername) memberUsername.textContent = name;
-            }
-
-            let currentUser = localStorage.getItem('hawai_username');
-            if (currentUser) {
-                updateUsername(currentUser);
-            }
-
-            if (changeNameBtn) {
-                changeNameBtn.addEventListener('click', () => {
-                    identityModal.classList.add('active');
-                });
-            }
-
-            if (saveNameBtn) {
-                saveNameBtn.addEventListener('click', () => {
-                    const newName = usernameInput.value.trim();
-                    if (newName) {
-                        localStorage.setItem('hawai_username', newName);
-                        updateUsername(newName);
-                        identityModal.classList.remove('active');
-                    }
-                });
-            }
-
-            // Memastikan fitur enter bekerja pada input nama
-            if (usernameInput) {
-                usernameInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        saveNameBtn.click();
-                    }
-                });
-            }
-
-            // --- Navigation / Tab Switching ---
-            function switchPage(targetId) {
-                // Hilangkan active class di semua tempat
-                pageSections.forEach(sec => sec.classList.remove('active'));
-                channelItems.forEach(item => item.classList.remove('active'));
-                mobileNavItems.forEach(item => item.classList.remove('active'));
-
-                // Munculkan section yang ditarget
-                const targetSection = document.getElementById(targetId);
-                if (targetSection) targetSection.classList.add('active');
-
-                // Update styling active di navigasi
-                document.querySelectorAll(`.channel-item[data-target="${targetId}"]`).forEach(el => el.classList.add('active'));
-                document.querySelectorAll(`.mobile-nav-item[data-target="${targetId}"]`).forEach(el => el.classList.add('active'));
-
-                // Update judul Header
-                if (activeChannelName) activeChannelName.textContent = targetId;
-            }
-
-            channelItems.forEach(item => {
-                item.addEventListener('click', () => switchPage(item.getAttribute('data-target')));
-            });
-
-            mobileNavItems.forEach(item => {
-                item.addEventListener('click', () => switchPage(item.getAttribute('data-target')));
-            });
-
-            // --- Modal Payment & Simulasi Loading ---
-            let loadingInterval;
-            
-            buyBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const gameName = btn.getAttribute('data-game');
-                    if (targetGameSpan) targetGameSpan.textContent = gameName;
-                    
-                    paymentModal.classList.add('active');
-                    if(loadingProgress) loadingProgress.style.width = '0%';
-                    
-                    let width = 0;
-                    clearInterval(loadingInterval);
-                    loadingInterval = setInterval(() => {
-                        width += 5;
-                        if(loadingProgress) loadingProgress.style.width = width + '%';
-                        
-                        if (width >= 100) {
-                            clearInterval(loadingInterval);
-                            setTimeout(() => {
-                                alert(`Redirecting payment portal for ${gameName}...`);
-                                paymentModal.classList.remove('active');
-                                if(loadingProgress) loadingProgress.style.width = '0%';
-                            }, 300);
-                        }
-                    }, 150);
-                });
-            });
-
-            if (btnCloseModal) {
-                btnCloseModal.addEventListener('click', () => {
-                    clearInterval(loadingInterval);
-                    paymentModal.classList.remove('active');
-                });
-            }
-
-            // --- Fetch Versi Tool dari Github API (Mock/Original logic implementation) ---
-            async function fetchLatestRelease() {
-                try {
-                    // Logic asli dari HAWAI script untuk mengambil data release github
-                    const response = await fetch('https://api.github.com/repos/hawai-projects/hawai-tool/releases/latest');
-                    if (!response.ok) throw new Error("Gagal mengambil data versi");
-                    
-                    const data = await response.json();
-                    if(versionTag) versionTag.textContent = "LATEST: " + data.tag_name;
-                    
-                    const asset = data.assets.find(a => a.name.includes('.exe'));
-                    if (asset && downloadBtn) downloadBtn.href = asset.browser_download_url;
-
-                } catch (error) {
-                    console.error("API Error: ", error);
-                    if(versionTag) versionTag.textContent = "STABLE BUILD";
-                    if(downloadBtn) downloadBtn.href = "https://github.com/hawai-projects";
-                }
-            }
-            
-            fetchLatestRelease();
-
-        });
-    </script>
-
-    <script>
-    // 1. Blokir Klik Kanan (Context Menu)
-    document.addEventListener('contextmenu', function(e) {
-        e.preventDefault();
-    });
-
-    // 2. Blokir Shortcut Keyboard (F12, Ctrl+U, Ctrl+Shift+I, dll)
-    document.addEventListener('keydown', function(e) {
-        // Blokir F12
-        if (e.key === 'F12') {
-            e.preventDefault();
-        }
-        
-        // Blokir Ctrl+U (View Source)
-        if (e.ctrlKey && (e.key === 'u' || e.key === 'U')) {
-            e.preventDefault();
-        }
-
-        // Blokir Ctrl+Shift+I (Inspect Element) / Ctrl+Shift+J (Console) / Ctrl+Shift+C
-        if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) {
-            e.preventDefault();
-        }
-        
-        // Blokir Ctrl+S (Save Page)
-        if (e.ctrlKey && (e.key === 's' || e.key === 'S')) {
-            e.preventDefault();
-        }
-    });
-
-    // 3. Tambahan: Bikin script pause kalau ada yang maksa buka dev tools (Anti-Debugging)
-    // Peringatan: Ini bisa bikin performa sedikit turun, tapi lumayan bikin repot yang inspect
-    setInterval(function() {
-        debugger;
-    }, 100);
-</script>
+    <script src="script.js"></script>
 </body>
+
 </html>
