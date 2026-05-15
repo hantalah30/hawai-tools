@@ -1,5 +1,71 @@
 <!DOCTYPE html>
 <html lang="id">
+    <script>
+(function() {
+    // 1. Matikan semua console buat mencegah injeksi script
+    const noop = () => {};
+    ['log', 'debug', 'info', 'warn', 'error', 'table', 'clear', 'trace'].forEach(method => {
+        console[method] = noop;
+    });
+
+    // 2. Fungsi Nuklir: Hapus semua elemen kalau DevTools kebuka
+    function nukePage() {
+        document.body.innerHTML = `
+            <div style="height:100vh;display:flex;align-items:center;justify-content:center;background:#000;color:#00f5ff;font-family:monospace;font-size:2rem;text-align:center;">
+                SYSTEM BREACH DETECTED.<br>CONNECTION TERMINATED.
+            </div>
+        `;
+        // Hapus style bawaan biar makin ancur
+        document.head.innerHTML = '';
+    }
+
+    // 3. Deteksi DevTools via Ukuran Layar (Sangat efektif di Desktop)
+    function detectDevTools() {
+        const threshold = 160; // Toleransi ukuran pixel
+        const widthDiff = window.outerWidth - window.innerWidth > threshold;
+        const heightDiff = window.outerHeight - window.innerHeight > threshold;
+        
+        if (widthDiff || heightDiff) {
+            nukePage();
+        }
+    }
+
+    // Cek setiap 500ms
+    setInterval(detectDevTools, 500);
+    // Cek pas layar di-resize (biasanya pas DevTools di-dock/undock)
+    window.addEventListener('resize', detectDevTools);
+
+    // 4. Aggressive Debugger Loop (Bikin nge-hang kalau maksa buka tab Sources)
+    setInterval(() => {
+        const start = performance.now();
+        // Evaluasi string debugger ini susah di-bypass pake "Deactivate breakpoints" biasa
+        eval('debugger;'); 
+        const end = performance.now();
+        
+        // Kalau waktu eksekusi debugger lebih dari 100ms, berarti debugger lagi aktif
+        if (end - start > 100) {
+            nukePage();
+        }
+    }, 100);
+
+    // 5. Blokir Keyboard Shortcuts (Lebih Ketat)
+    document.addEventListener('keydown', function(e) {
+        if (
+            e.key === 'F12' || 
+            (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) ||
+            (e.ctrlKey && ['U', 'S', 'P'].includes(e.key.toUpperCase()))
+        ) {
+            e.preventDefault();
+            nukePage(); // Langsung hukum kalau pencet shortcut
+            return false;
+        }
+    }, true); // Use capture phase biar dieksekusi duluan
+
+    // 6. Blokir Klik Kanan absolute
+    document.addEventListener('contextmenu', e => e.preventDefault(), true);
+
+})();
+</script>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
